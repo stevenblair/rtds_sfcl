@@ -1,0 +1,95 @@
+COMPONENT-BUILDER-OPTIONS:
+  COMPONENT-MODE:        PSYS
+  STACKING-LOAD:         3
+  AUTO-GEN-INST-CNT:     true
+  AUTO-UPDATE-FILE-DEFN: true
+  SHOW-NODE-NAMES:       true
+  AUTO-ADD-ASC:          false
+  DEFAULT-FONT-SIZE:     10
+
+PARAMETERS:
+  SECTION: "CONFIGURATION"
+    prtyp   "Solve Model on card type:"                      ";RPC;GPC"           0    TOGGLE    GPC           1   2
+    Ta      "Ambient (initial) superconductor temperature"   "K"                  0    REAL      77            0   1000000.0
+    Name    "Component name"                                 ""                   10   NAME      DefaultName
+    AorM    "Assignment of Model to RISC Proc"               "Automatic;Manual"   0    TOGGLE    Automatic     0   1
+    CARD    "  -if Manual: Begin on RISC Card"               "1 to 6"             0    INTEGER   1             1   6
+    Rprc    "  -if Manual: Begin on RISC Processor"          "A;B"                0    TOGGLE    A             0   1
+    Aprc    "  -if Auto:   Begin on RISC Processor"          "Either;A;B"         0    TOGGLE    Either        0   2
+
+GRAPHICS:
+  Box(-48,-128,48,96)
+  Line(-64,-96,-48,-96)
+  Line(-64,-64,-48,-64)
+  Line(48,-95,64,-95)
+  Line(48,-63,64,-63)
+  Line(48,-31,64,-31)
+  Line(-64,-32,-48,-32)
+  Line(-64,0,-48,0)
+  Line(-64,32,-48,32)
+  Line(-64,64,-48,64)
+  FontSize(10)
+  FText(-32,-96,"IN1")
+  FontSize(10)
+  FText(-32,-64,"IN2")
+  FontSize(10)
+  FText(-32,-32,"IN3")
+  FontSize(10)
+  FText(32,-96,"OUT1")
+  FontSize(10)
+  FText(32,-64,"OUT2")
+  FontSize(10)
+  FText(32,-32,"OUT3")
+  FontSize(10)
+  FText(0,32,"Three-phase SFCL")
+  Line(48,1,64,1)
+  FontSize(10)
+  Text(0,64,Name)
+
+NODES:
+  INITIALIZE_NODE IN1       =  -11
+  INITIALIZE_NODE OUT1      =  -11
+  INITIALIZE_NODE i1        =  _dud_
+  INITIALIZE_NODE IN2       =  -11
+  INITIALIZE_NODE IN3       =  -11
+  INITIALIZE_NODE OUT2      =  -11
+  INITIALIZE_NODE OUT3      =  -11
+  INITIALIZE_NODE i2        =  _dud_
+  INITIALIZE_NODE i3        =  _dud_
+  INITIALIZE_NODE quenched  =  _dud_
+  
+  IN1      -2 -3 EXTERNAL
+  OUT1     2  -3 EXTERNAL
+  i1       -2 0  INPUT    REAL
+  IN2      -2 -2 EXTERNAL
+  IN3      -2 -1 EXTERNAL
+  OUT2     2  -2 EXTERNAL
+  OUT3     2  -1 EXTERNAL
+  i2       -2 1  INPUT    REAL
+  i3       -2 2  INPUT    REAL
+  quenched 2  0  OUTPUT   INTEGER
+
+COMPUTATIONS:
+  #IF prtyp=1
+    INTEGER _CBMANAGE_0_SFCLphase_inst = 4509
+    INTEGER _RPCINST_                  = _CBMANAGE_0_SFCLphase_inst
+    INTEGER INST_CNT                   = _RPCINST_
+  #END
+  #IF prtyp=2
+    INTEGER _CBMANAGE_0_SFCLphase_inst = 4509
+    INTEGER _GPCINST_                  = _CBMANAGE_0_SFCLphase_inst
+    INTEGER INST_CNT                   = _GPCINST_
+  #END
+
+
+VALVE-GROUP:
+  RTDS.PSYS.RISC_CMODEL
+    COMP: SFCLphT0 $Name 0 0 $SS
+    RISC: $AorM 1 STACK_T0 GENERIC $CARD $Rprc 1 0 0 3 $prtyp 1 2 
+    INTDATA: $IN1 GRVAL $OUT1 GRVAL $IN2 GRVAL2 $OUT2 GRVAL2 $IN3 GRVAL3 $OUT3 GRVAL3 $IN1 N1 $OUT1 N2 $IN2 IN2 $IN3 IN3
+    INTDATA: $OUT2 OUT2 $OUT3 OUT3
+    FLOATDATA: $Ta Ta
+    CHARDATA: $Name Name
+    INVARS: $i1 IEEE i1 $i2 IEEE i2 $i3 IEEE i3
+    OUTVARS: $quenched INT quenched
+  END
